@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from services.database import SteamDatabase
-from utils.config import OUTPUT_DIR
+from utils.config import OUTPUT_DIR, TOP_LIMIT
 from utils.helpers import clean_text, ensure_directory, pipe_to_list, safe_json_dump
 
 
@@ -34,6 +34,7 @@ class SteamAnalyzer:
 
         cleaned = self._clean_frame(frame)
         stats = self._build_statistics(cleaned)
+        self._export_games_list(frame)
         self._export_tags(stats["top_tags"])
         self._plot_top_tags(stats["top_tags"])
         return stats
@@ -103,6 +104,18 @@ class SteamAnalyzer:
 
         top_tags.to_csv(csv_path, index=False)
         json_path.write_text(safe_json_dump(top_tags.to_dict(orient="records")), encoding="utf-8")
+
+    def _export_games_list(self, frame: pd.DataFrame) -> None:
+        """Write a text file with the top collected games."""
+
+        txt_path = self.output_dir / "games.txt"
+        top_games = frame.sort_values("jogadores", ascending=False).head(TOP_LIMIT)
+
+        lines = [
+            f"{index + 1}. {row.nome} (appid: {int(row.appid)}) - {int(row.jogadores)} jogadores"
+            for index, row in top_games.reset_index(drop=True).iterrows()
+        ]
+        txt_path.write_text("\n".join(lines), encoding="utf-8")
 
     def _plot_top_tags(self, top_tags: pd.DataFrame) -> None:
         """Generate a horizontal bar chart for the top 20 tags."""
