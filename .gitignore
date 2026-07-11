@@ -9,4 +9,5 @@ data/*.db
 output/*.csv
 output/*.json
 output/*.png
+output/*.txt
 logs/*.log
